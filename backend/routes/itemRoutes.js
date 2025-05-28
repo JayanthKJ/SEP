@@ -3,29 +3,49 @@ import Item from '../models/Item.js';
 
 const router = express.Router();
 
-// GET all items
-router.get('/', async (req, res) => {
-  const items = await Item.find().sort({ date: -1 });
-  res.json(items);
-});
-
-// GET single item by ID
+// Get item by ID
 router.get('/:id', async (req, res) => {
-  const item = await Item.findById(req.params.id);
-  res.json(item);
+  try {
+    const item = await Item.findById(req.params.id);
+    if (!item) return res.status(404).json({ error: 'Item not found' });
+    res.json(item);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
-// POST new item
-router.post('/', async (req, res) => {
-  const newItem = new Item(req.body);
-  const saved = await newItem.save();
-  res.status(201).json(saved);
+// Get potential matches
+router.get('/:id/matches', async (req, res) => {
+  try {
+    const currentItem = await Item.findById(req.params.id);
+    if (!currentItem) return res.status(404).json({ error: 'Item not found' });
+
+    const matches = await Item.find({
+      _id: { $ne: currentItem._id },
+      status: { $ne: currentItem.status },
+      category: currentItem.category
+    });
+
+    const enrichedMatches = matches.map(item => ({
+      item,
+      matchScore: Math.floor(Math.random() * 40) + 60
+    })).sort((a, b) => b.matchScore - a.matchScore).slice(0, 5);
+
+    res.json(enrichedMatches);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
-// PATCH update item
-router.patch('/:id', async (req, res) => {
-  const updated = await Item.findByIdAndUpdate(req.params.id, req.body, { new: true });
-  res.json(updated);
+// Mark item as resolved
+router.patch('/:id/resolve', async (req, res) => {
+  try {
+    const item = await Item.findByIdAndUpdate(req.params.id, { isResolved: true }, { new: true });
+    if (!item) return res.status(404).json({ error: 'Item not found' });
+    res.json(item);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 export default router;

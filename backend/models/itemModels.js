@@ -3,7 +3,7 @@ import mongoose from 'mongoose';
 const ItemSchema = new mongoose.Schema({
   title: String,
   description: String,
-  status: String,
+  status: String, // 'lost' or 'found'
   category: String,
   date: Date,
   location: {

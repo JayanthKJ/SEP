@@ -1,12 +1,22 @@
-const Item = require('../models/itemModels');
+import Item from "../models/Item.js";
 
-exports.createItem = async (req, res) => {
+// Create new item
+export const createItem = async (req, res) => {
   try {
-    const item = await Item.create(req.body);
-    res.status(201).json(item);
+    const newItem = new Item(req.body);
+    await newItem.save();
+    res.status(201).json(newItem);
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    res.status(400).json({ message: err.message });
   }
 };
 
-// Add other CRUD ops similarly...
+// Get all items
+export const getItems = async (req, res) => {
+  try {
+    const items = await Item.find().sort({ date: -1 });
+    res.status(200).json(items);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
